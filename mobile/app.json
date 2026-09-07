@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "Bookly",
+    "slug": "bookly-appointment-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./src/assets/images/bookly-logo.png",
+    "userInterfaceStyle": "light",
+   
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bookly.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Bookly uses your location to show nearby professionals.",
+        "NSCameraUsageDescription": "Bookly uses your camera to update your profile photo.",
+        "NSPhotoLibraryUsageDescription": "Bookly needs access to your photos to set a profile picture."
+      }
+    },
+    "android": {
+      "package": "com.bookly.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/images/adaptive-icon.png",
+        "backgroundColor": "#FFF9FC"
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "NOTIFICATIONS"
+      ]
+    },
+    "plugins": [
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./src/assets/images/notification-icon.png",
+          "color": "#EC4899"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Bookly needs access to your photos to set a profile picture."
+        }
+      ],
+      "expo-status-bar"
+    ]
+  }
+}

@@ -1,16 +1,19 @@
-import React from 'react';
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
   TouchableOpacity,
-} from 'react-native';
+  ActivityIndicator,
+} from "react-native";
 
 import {
   Clock,
   ChevronRight,
-} from 'lucide-react-native';
+  AlertCircle,
+  RefreshCw,
+} from "lucide-react-native";
 
 import {
   colors,
@@ -18,7 +21,9 @@ import {
   spacing,
   radius,
   shadows,
-} from '../../theme';
+} from "../../theme";
+
+import professionalService from "../../services/professionalService";
 
 export default function ServiceSelectionScreen({
   route,
@@ -26,16 +31,104 @@ export default function ServiceSelectionScreen({
 }) {
   const {
     professional,
-    services = [],
     selectedService,
-  } = route.params;
+  } = route.params || {};
+
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const professionalId = professional?._id;
+
+  useEffect(() => {
+    if (!professionalId) {
+      setLoading(false);
+      setError("Professional information is missing.");
+      return;
+    }
+
+    loadServices();
+  }, [professionalId]);
+
+  const loadServices = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const data = await professionalService.getServices(
+        professionalId
+      );
+
+      setServices(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Failed to load professional services:", err);
+
+      setError(
+        err?.response?.data?.message ||
+          "Unable to load services. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleServiceSelect = (service) => {
-    navigation.navigate('DateTimeSelection', {
+    navigation.navigate("DateTimeSelection", {
       professional,
       service,
     });
   };
+
+  if (loading) {
+    return (
+      <View style={styles.centerContainer}>
+        <ActivityIndicator
+          size="large"
+          color={colors.primary}
+        />
+
+        <Text style={styles.loadingText}>
+          Loading services...
+        </Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.centerContainer}>
+        <View style={styles.errorIcon}>
+          <AlertCircle
+            size={28}
+            color={colors.primary}
+          />
+        </View>
+
+        <Text style={styles.errorTitle}>
+          Couldn't load services
+        </Text>
+
+        <Text style={styles.errorText}>
+          {error}
+        </Text>
+
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={loadServices}
+          activeOpacity={0.8}
+        >
+          <RefreshCw
+            size={17}
+            color={colors.card}
+          />
+
+          <Text style={styles.retryText}>
+            Try again
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -46,7 +139,7 @@ export default function ServiceSelectionScreen({
         </Text>
 
         <Text style={styles.subtitle}>
-          with {professional?.user?.name || 'Professional'}
+          with {professional?.user?.name || "Professional"}
         </Text>
       </View>
 
@@ -54,8 +147,13 @@ export default function ServiceSelectionScreen({
       <FlatList
         data={services}
         keyExtractor={(item) => item._id}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[
+          styles.listContent,
+          services.length === 0 && styles.emptyListContent,
+        ]}
         showsVerticalScrollIndicator={false}
+        refreshing={loading}
+        onRefresh={loadServices}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyTitle}>
@@ -133,6 +231,19 @@ const styles = StyleSheet.create({
     paddingTop: 60,
   },
 
+  centerContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: spacing.xl,
+  },
+
+  loadingText: {
+    ...typography.bodySecondary,
+    marginTop: spacing.md,
+  },
+
   header: {
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.sm,
@@ -153,9 +264,13 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
 
+  emptyListContent: {
+    flexGrow: 1,
+  },
+
   card: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.card,
     borderRadius: radius.lg,
     padding: spacing.md,
@@ -183,8 +298,8 @@ const styles = StyleSheet.create({
   },
 
   metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 4,
     marginTop: 6,
   },
@@ -194,7 +309,7 @@ const styles = StyleSheet.create({
   },
 
   right: {
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
     gap: 4,
   },
 
@@ -204,18 +319,57 @@ const styles = StyleSheet.create({
   },
 
   emptyContainer: {
-    alignItems: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: spacing.xl,
+    flex: 1,
   },
 
   emptyTitle: {
     ...typography.h4,
-    textAlign: 'center',
+    textAlign: "center",
   },
 
   emptyText: {
     ...typography.bodySecondary,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: spacing.xs,
+  },
+
+  errorIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.card,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.md,
+  },
+
+  errorTitle: {
+    ...typography.h4,
+    textAlign: "center",
+  },
+
+  errorText: {
+    ...typography.bodySecondary,
+    textAlign: "center",
+    marginTop: spacing.xs,
+  },
+
+  retryButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.md,
+    marginTop: spacing.lg,
+  },
+
+  retryText: {
+    color: colors.card,
+    fontWeight: "700",
   },
 });

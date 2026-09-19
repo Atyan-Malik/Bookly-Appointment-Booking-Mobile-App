@@ -4,7 +4,7 @@ const appointmentService = require('../services/appointmentService');
 
 exports.create = catchAsync(async (req, res) => {
   const appointment = await appointmentService.createAppointment({
-    customerId: req.user._id,
+    customerId: req.user.id,
     professionalId: req.body.professionalId,
     serviceId: req.body.serviceId,
     date: req.body.date,
@@ -16,7 +16,7 @@ exports.create = catchAsync(async (req, res) => {
 
 exports.list = catchAsync(async (req, res) => {
   const result = await appointmentService.listAppointments({
-    userId: req.user._id,
+    userId: req.user.id,
     role: req.user.role,
     status: req.query.status,
     page: req.query.page,

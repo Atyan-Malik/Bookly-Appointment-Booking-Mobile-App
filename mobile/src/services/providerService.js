@@ -4,32 +4,44 @@ const providerService = {
   // =========================
   // CATEGORIES
   // =========================
+
   getCategories: async () => {
-    const response = await apiClient.get("/services/categories");
+    const response = await apiClient.get('/services/categories');
+
     return response.data.data;
   },
 
   // =========================
   // SERVICES
   // =========================
+
   listMyServices: async () => {
     const response = await apiClient.get('/services/my');
+
     return response.data.data;
   },
 
   createService: async (serviceData) => {
-    const response = await apiClient.post('/services', serviceData);
+    const response = await apiClient.post(
+      '/services',
+      serviceData
+    );
+
     return response.data.data;
   },
 
   deleteService: async (serviceId) => {
-    const response = await apiClient.delete(`/services/${serviceId}`);
+    const response = await apiClient.delete(
+      `/services/${serviceId}`
+    );
+
     return response.data.data;
   },
 
   // =========================
   // PROVIDER CALENDAR
   // =========================
+
   getMyAvailability: async () => {
     const response = await apiClient.get(
       '/professionals/me/availability'
@@ -42,6 +54,36 @@ const providerService = {
     const response = await apiClient.put(
       '/professionals/me/availability',
       availabilityData
+    );
+
+    return response.data.data;
+  },
+
+  // =========================
+  // PROFESSIONAL PROFILE
+  // =========================
+
+  getMyProfessional: async () => {
+    const response = await apiClient.get(
+      '/professionals/me'
+    );
+
+    return response.data.data;
+  },
+
+  createProfessional: async (payload) => {
+    const response = await apiClient.post(
+      '/professionals',
+      payload
+    );
+
+    return response.data.data;
+  },
+
+  updateMyProfessional: async (payload) => {
+    const response = await apiClient.put(
+      '/professionals/me',
+      payload
     );
 
     return response.data.data;

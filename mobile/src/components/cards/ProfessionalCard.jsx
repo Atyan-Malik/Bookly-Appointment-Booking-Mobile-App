@@ -7,26 +7,52 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Star, MapPin, Heart } from 'lucide-react-native';
-import { colors, radius, spacing, typography, shadows } from '../../theme';
+
+import {
+  colors,
+  radius,
+  spacing,
+  typography,
+  shadows,
+} from '../../theme';
 
 export default function ProfessionalCard({
   professional,
   onPress,
   isFavorite,
   onToggleFavorite,
+  variant = 'grid',
 }) {
-  const name = professional.user?.name || professional.profession || 'Professional';
+  const name =
+    professional.user?.name ||
+    professional.name ||
+    'Professional';
 
-  // Get professional image directly from the Professional document
+  const profession =
+    professional.category?.name ||
+    professional.profession ||
+    'Professional';
+
   const image = professional.images?.[0];
+
+  const isCompact = variant === 'compact';
 
   return (
     <TouchableOpacity
       activeOpacity={0.85}
       onPress={onPress}
-      style={styles.card}
+      style={[
+        styles.card,
+        isCompact && styles.compactCard,
+      ]}
     >
-      <View style={styles.imageWrap}>
+      {/* Image */}
+      <View
+        style={[
+          styles.imageWrap,
+          isCompact && styles.compactImageWrap,
+        ]}
+      >
         {image ? (
           <Image
             source={{ uri: image }}
@@ -41,28 +67,56 @@ export default function ProfessionalCard({
           </View>
         )}
 
+        {/* Favorite */}
         <TouchableOpacity
           style={styles.favButton}
           onPress={onToggleFavorite}
           hitSlop={8}
+          activeOpacity={0.8}
         >
           <Heart
             size={16}
-            color={isFavorite ? colors.primary : colors.textMuted}
-            fill={isFavorite ? colors.primary : 'transparent'}
+            color={
+              isFavorite
+                ? colors.primary
+                : colors.textMuted
+            }
+            fill={
+              isFavorite
+                ? colors.primary
+                : 'transparent'
+            }
           />
         </TouchableOpacity>
       </View>
 
-      <View style={styles.info}>
-        <Text style={styles.name} numberOfLines={1}>
+      {/* Information */}
+      <View
+        style={[
+          styles.info,
+          isCompact && styles.compactInfo,
+        ]}
+      >
+        {/* Name */}
+        <Text
+          style={[
+            styles.name,
+            isCompact && styles.compactName,
+          ]}
+          numberOfLines={1}
+        >
           {name}
         </Text>
 
-        <Text style={styles.profession} numberOfLines={1}>
-          {professional.profession}
+        {/* Profession */}
+        <Text
+          style={styles.profession}
+          numberOfLines={1}
+        >
+          {profession}
         </Text>
 
+        {/* Rating */}
         <View style={styles.row}>
           <Star
             size={13}
@@ -71,7 +125,9 @@ export default function ProfessionalCard({
           />
 
           <Text style={styles.rating}>
-            {professional.rating?.toFixed(1) ?? '0.0'}
+            {Number(
+              professional.rating || 0
+            ).toFixed(1)}
           </Text>
 
           <Text style={styles.reviewCount}>
@@ -79,14 +135,23 @@ export default function ProfessionalCard({
           </Text>
         </View>
 
+        {/* Location */}
         <View style={styles.row}>
-          <MapPin size={13} color={colors.textMuted} />
+          <MapPin
+            size={13}
+            color={colors.textMuted}
+          />
 
-          <Text style={styles.location} numberOfLines={1}>
-            {professional.location?.city || 'Location unavailable'}
+          <Text
+            style={styles.location}
+            numberOfLines={1}
+          >
+            {professional.location?.city ||
+              'Location unavailable'}
           </Text>
         </View>
 
+        {/* Price */}
         <Text style={styles.price}>
           From Rs {professional.startingPrice ?? 0}
         </Text>
@@ -96,16 +161,25 @@ export default function ProfessionalCard({
 }
 
 const styles = StyleSheet.create({
- card: {
-  width: '100%',
-  backgroundColor: colors.card,
-  borderRadius: radius.lg,
-  overflow: 'hidden',
-  ...shadows.card,
-},
+  card: {
+    width: '100%',
+    backgroundColor: colors.card,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+    ...shadows.card,
+  },
+
+  compactCard: {
+    width: 210,
+  },
 
   imageWrap: {
     position: 'relative',
+    width: '100%',
+  },
+
+  compactImageWrap: {
+    height: 110,
   },
 
   image: {
@@ -139,8 +213,16 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
   },
 
+  compactInfo: {
+    padding: spacing.sm,
+  },
+
   name: {
     ...typography.h4,
+    fontSize: 14,
+  },
+
+  compactName: {
     fontSize: 14,
   },
 

@@ -4,7 +4,10 @@ const professionalService = require('../services/professionalService');
 
 exports.list = catchAsync(async (req, res) => {
   const result = await professionalService.listProfessionals(req.query);
-  sendSuccess(res, { data: result });
+
+  sendSuccess(res, {
+    data: result,
+  });
 });
 
 exports.getById = catchAsync(async (req, res) => {
@@ -39,6 +42,52 @@ exports.getAvailability = catchAsync(async (req, res) => {
     data: slots,
   });
 });
+
+// ==========================================
+// PROVIDER PROFESSIONAL PROFILE
+// ==========================================
+
+// GET /professionals/me
+exports.getMyProfessional = catchAsync(async (req, res) => {
+  const professional = await professionalService.getMyProfessional(
+    req.user.id
+  );
+
+  sendSuccess(res, {
+    data: professional,
+  });
+});
+
+// POST /professionals
+exports.createProfessional = catchAsync(async (req, res) => {
+  const professional = await professionalService.createProfessional(
+    req.user.id,
+    req.body
+  );
+
+  sendSuccess(res, {
+    statusCode: 201,
+    message: 'Professional profile created successfully',
+    data: professional,
+  });
+});
+
+// PUT /professionals/me
+exports.updateMyProfessional = catchAsync(async (req, res) => {
+  const professional = await professionalService.updateMyProfessional(
+    req.user.id,
+    req.body
+  );
+
+  sendSuccess(res, {
+    message: 'Professional profile updated successfully',
+    data: professional,
+  });
+});
+
+// ==========================================
+// PROVIDER AVAILABILITY
+// ==========================================
 
 exports.getMyAvailability = catchAsync(async (req, res) => {
   const availability = await professionalService.getMyAvailability(

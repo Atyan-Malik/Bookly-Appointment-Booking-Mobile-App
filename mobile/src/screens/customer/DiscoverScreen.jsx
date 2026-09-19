@@ -1,5 +1,9 @@
+import React, {
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
 
-import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -9,9 +13,18 @@ import {
   TouchableOpacity,
   useWindowDimensions,
 } from 'react-native';
-import { Search as SearchIcon } from 'lucide-react-native';
 
-import { colors, typography, spacing, radius } from '../../theme';
+import {
+  Search as SearchIcon,
+} from 'lucide-react-native';
+
+import {
+  colors,
+  typography,
+  spacing,
+  radius,
+} from '../../theme';
+
 import { SORT_OPTIONS } from '../../constants';
 
 import professionalService from '../../services/professionalService';
@@ -20,6 +33,7 @@ import categoryService from '../../services/categoryService';
 import { useFavoritesStore } from '../../store/favoriteStore';
 
 import ProfessionalCard from '../../components/cards/ProfessionalCard';
+
 import LoadingState from '../../components/ui/LoadingState';
 import ErrorState from '../../components/ui/ErrorState';
 import EmptyState from '../../components/ui/EmptyState';
@@ -28,7 +42,10 @@ const NUM_COLUMNS = 2;
 const COLUMN_GAP = spacing.md;
 const H_PADDING = spacing.lg;
 
-export default function DiscoverScreen({ navigation, route }) {
+export default function DiscoverScreen({
+  navigation,
+  route,
+}) {
   const { width } = useWindowDimensions();
 
   const cardWidth =
@@ -38,16 +55,20 @@ export default function DiscoverScreen({ navigation, route }) {
     NUM_COLUMNS;
 
   const [search, setSearch] = useState('');
+
   const [category, setCategory] = useState(
     route.params?.category || null
   );
+
   const [sort, setSort] = useState('recommended');
 
   const [categories, setCategories] = useState([]);
   const [professionals, setProfessionals] = useState([]);
 
   const [loading, setLoading] = useState(true);
-  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [categoriesLoading, setCategoriesLoading] =
+    useState(true);
+
   const [error, setError] = useState(null);
 
   const {
@@ -55,6 +76,10 @@ export default function DiscoverScreen({ navigation, route }) {
     toggleFavorite,
     fetchFavorites,
   } = useFavoritesStore();
+
+  // --------------------------------
+  // Load categories
+  // --------------------------------
 
   const loadCategories = useCallback(async () => {
     try {
@@ -64,34 +89,53 @@ export default function DiscoverScreen({ navigation, route }) {
 
       setCategories(result || []);
     } catch (error) {
-      console.error('Load categories error:', error);
+      console.error(
+        'Load categories error:',
+        error
+      );
     } finally {
       setCategoriesLoading(false);
     }
   }, []);
 
-  const loadProfessionals = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  // --------------------------------
+  // Load professionals
+  // --------------------------------
 
-    try {
-      const result = await professionalService.list({
-        search: search.trim() || undefined,
-        category: category || undefined,
-        sort,
-      });
+  const loadProfessionals = useCallback(
+    async () => {
+      setLoading(true);
+      setError(null);
 
-      setProfessionals(result || []);
-    } catch (error) {
-      console.error('Load professionals error:', error);
+      try {
+        const result =
+          await professionalService.list({
+            search: search.trim() || undefined,
+            category: category || undefined,
+            sort,
+          });
 
-      setError(
-        error.message || 'Failed to load professionals'
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [search, category, sort]);
+        setProfessionals(result || []);
+      } catch (error) {
+        console.error(
+          'Load professionals error:',
+          error
+        );
+
+        setError(
+          error.message ||
+            'Failed to load professionals'
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [search, category, sort]
+  );
+
+  // --------------------------------
+  // Effects
+  // --------------------------------
 
   useEffect(() => {
     loadCategories();
@@ -109,38 +153,75 @@ export default function DiscoverScreen({ navigation, route }) {
     return () => clearTimeout(timeout);
   }, [loadProfessionals]);
 
-  const handleCategoryPress = (categoryId) => {
-    setCategory((current) =>
-      current === categoryId ? null : categoryId
-    );
+  // --------------------------------
+  // Search
+  // --------------------------------
+
+  const handleSearchChange = (text) => {
+    setSearch(text);
+
+    // Search should work across all professionals.
+    // Clear the selected category when searching.
+    if (text.trim()) {
+      setCategory(null);
+    }
   };
 
- const renderProfessional = ({ item, index }) => (
-  <View
-    style={[
-      styles.professionalWrapper,
-      {
-        width: cardWidth,
-        marginRight:
-          index % NUM_COLUMNS === 0 ? COLUMN_GAP : 0,
-      },
-    ]}
-  >
-    <ProfessionalCard
-      professional={item}
-      isFavorite={isFavorite(item._id)}
-      onToggleFavorite={() => toggleFavorite(item._id)}
-      onPress={() =>
-        navigation.navigate('ProfessionalDetail', {
-          id: item._id,
-        })
-      }
-    />
-  </View>
-);
+  // --------------------------------
+  // Category
+  // --------------------------------
+
+  const handleCategoryPress = (categoryId) => {
+    setCategory((current) =>
+      current === categoryId
+        ? null
+        : categoryId
+    );
+
+    // Selecting a category clears the text search
+    // so the two filters don't conflict.
+    setSearch('');
+  };
+
+  // --------------------------------
+  // Professional card
+  // --------------------------------
+
+  const renderProfessional = ({ item }) => (
+    <View
+      style={[
+        styles.professionalWrapper,
+        {
+          width: cardWidth,
+        },
+      ]}
+    >
+      <ProfessionalCard
+        professional={item}
+        variant="grid"
+        isFavorite={isFavorite(item._id)}
+        onToggleFavorite={() =>
+          toggleFavorite(item._id)
+        }
+        onPress={() =>
+          navigation.navigate(
+            'ProfessionalDetail',
+            {
+              id: item._id,
+            }
+          )
+        }
+      />
+    </View>
+  );
+
+  // --------------------------------
+  // Render
+  // --------------------------------
 
   return (
     <View style={styles.container}>
+      {/* Search */}
       <View style={styles.searchRow}>
         <View style={styles.searchBar}>
           <SearchIcon
@@ -151,75 +232,94 @@ export default function DiscoverScreen({ navigation, route }) {
           <TextInput
             style={styles.searchInput}
             placeholder="Search professionals..."
-            placeholderTextColor={colors.textMuted}
+            placeholderTextColor={
+              colors.textMuted
+            }
             value={search}
-            onChangeText={setSearch}
+            onChangeText={handleSearchChange}
             returnKeyType="search"
             autoCorrect={false}
           />
         </View>
       </View>
 
-      {!categoriesLoading && categories.length > 0 && (
-        <View style={styles.filtersBlock}>
-          <FlatList
-            horizontal
-            data={categories}
-            keyExtractor={(item) => item._id}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.chipRow}
-            renderItem={({ item }) => {
-              const isActive = category === item._id;
+      {/* Categories */}
+      {!categoriesLoading &&
+        categories.length > 0 && (
+          <View style={styles.filtersBlock}>
+            <FlatList
+              horizontal
+              data={categories}
+              keyExtractor={(item) => item._id}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={
+                styles.chipRow
+              }
+              renderItem={({ item }) => {
+                const isActive =
+                  category === item._id;
 
-              return (
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={() =>
-                    handleCategoryPress(item._id)
-                  }
-                  style={[
-                    styles.chip,
-                    isActive && styles.chipActive,
-                  ]}
-                >
-                  <Text
+                return (
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() =>
+                      handleCategoryPress(
+                        item._id
+                      )
+                    }
                     style={[
-                      styles.chipText,
-                      isActive && styles.chipTextActive,
+                      styles.chip,
+                      isActive &&
+                        styles.chipActive,
                     ]}
                   >
-                    {item.name}
-                  </Text>
-                </TouchableOpacity>
-              );
-            }}
-          />
-        </View>
-      )}
+                    <Text
+                      style={[
+                        styles.chipText,
+                        isActive &&
+                          styles.chipTextActive,
+                      ]}
+                    >
+                      {item.name}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          </View>
+        )}
 
+      {/* Sort */}
       <View style={styles.filtersBlock}>
         <FlatList
           horizontal
           data={SORT_OPTIONS}
           keyExtractor={(item) => item.id}
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.chipRow}
+          contentContainerStyle={
+            styles.chipRow
+          }
           renderItem={({ item }) => {
-            const isActive = sort === item.id;
+            const isActive =
+              sort === item.id;
 
             return (
               <TouchableOpacity
                 activeOpacity={0.8}
-                onPress={() => setSort(item.id)}
+                onPress={() =>
+                  setSort(item.id)
+                }
                 style={[
                   styles.sortChip,
-                  isActive && styles.chipActive,
+                  isActive &&
+                    styles.chipActive,
                 ]}
               >
                 <Text
                   style={[
                     styles.chipText,
-                    isActive && styles.chipTextActive,
+                    isActive &&
+                      styles.chipTextActive,
                   ]}
                 >
                   {item.label}
@@ -230,6 +330,7 @@ export default function DiscoverScreen({ navigation, route }) {
         />
       </View>
 
+      {/* Content */}
       {loading ? (
         <LoadingState />
       ) : error ? (
@@ -247,8 +348,12 @@ export default function DiscoverScreen({ navigation, route }) {
           data={professionals}
           keyExtractor={(item) => item._id}
           numColumns={NUM_COLUMNS}
-          columnWrapperStyle={styles.columnWrapper}
-          contentContainerStyle={styles.resultsContent}
+          columnWrapperStyle={
+            styles.columnWrapper
+          }
+          contentContainerStyle={
+            styles.resultsContent
+          }
           showsVerticalScrollIndicator={false}
           renderItem={renderProfessional}
         />
@@ -334,6 +439,7 @@ const styles = StyleSheet.create({
   columnWrapper: {
     paddingHorizontal: H_PADDING,
     marginBottom: COLUMN_GAP,
+    justifyContent: 'space-between',
   },
 
   professionalWrapper: {

@@ -5,7 +5,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Home, Search, CalendarCheck, Heart, User } from "lucide-react-native";
 
 import HomeScreen from "../screens/customer/HomeScreen";
-import AppointmentsScreen from "../screens/customer/AppointmentsScreen";
+import CustomerAppointmentStackNavigator from './CustomerAppointmentStackNavigator';
 import ProfileScreen from "../screens/customer/ProfileScreen";
 import DiscoverStackNavigator from "./DiscoverStackNavigator";
 import FavoritesScreen from "../screens/customer/FavoritesScreen";
@@ -65,8 +65,10 @@ export default function CustomerTabNavigator() {
       <Tab.Screen name="Discover" component={DiscoverStackNavigator} />
 
       {/* Customer appointments */}
-      <Tab.Screen name="Appointments" component={AppointmentsScreen} />
-
+<Tab.Screen
+  name="Appointments"
+  component={CustomerAppointmentStackNavigator}
+/>
       {/* Customer favorites */}
       <Tab.Screen name="Favorites" component={FavoritesScreen} />
 

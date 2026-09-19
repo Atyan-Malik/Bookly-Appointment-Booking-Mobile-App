@@ -26,18 +26,23 @@ import {
 import Button from '../../components/ui/Button';
 import appointmentService from '../../services/appointmentService';
 
-function Row({ icon, label, value }) {
+function Row({ icon, label, value, last = false }) {
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, last && styles.lastRow]}>
       <View style={styles.rowLeft}>
-        {icon}
+        <View style={styles.iconContainer}>
+          {icon}
+        </View>
 
         <Text style={styles.rowLabel}>
           {label}
         </Text>
       </View>
 
-      <Text style={styles.rowValue}>
+      <Text
+        style={styles.rowValue}
+        numberOfLines={2}
+      >
         {value || 'Not provided'}
       </Text>
     </View>
@@ -65,17 +70,6 @@ export default function BookingConfirmationScreen({
     try {
       setLoading(true);
 
-      /*
-       * Only send IDs and booking information.
-       *
-       * Do NOT send:
-       * - customerId
-       * - price
-       * - durationMinutes
-       * - endTime
-       *
-       * The backend should derive/validate those.
-       */
       const appointment =
         await appointmentService.create({
           professionalId: professional._id,
@@ -84,10 +78,6 @@ export default function BookingConfirmationScreen({
           startTime,
         });
 
-      /*
-       * Backend-created appointment is now
-       * the source of truth.
-       */
       navigation.replace('BookingSuccess', {
         appointment,
       });
@@ -111,6 +101,7 @@ export default function BookingConfirmationScreen({
 
   const professionalName =
     professional?.user?.name ||
+    professional?.name ||
     'Professional';
 
   const serviceName =
@@ -128,21 +119,28 @@ export default function BookingConfirmationScreen({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
       >
-        <Text style={styles.title}>
-          Confirm your appointment
-        </Text>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.title}>
+            Confirm your appointment
+          </Text>
 
-        <Text style={styles.subtitle}>
-          Review your booking details before
-          confirming.
-        </Text>
+          <Text style={styles.subtitle}>
+            Review your booking details before confirming.
+          </Text>
+        </View>
 
+        {/* Booking Details */}
         <View style={styles.card}>
+          <Text style={styles.sectionTitle}>
+            Booking details
+          </Text>
+
           <Row
             icon={
               <User
-                size={17}
-                color={colors.textMuted}
+                size={18}
+                color={colors.primary}
               />
             }
             label="Professional"
@@ -152,8 +150,8 @@ export default function BookingConfirmationScreen({
           <Row
             icon={
               <Briefcase
-                size={17}
-                color={colors.textMuted}
+                size={18}
+                color={colors.primary}
               />
             }
             label="Service"
@@ -163,8 +161,8 @@ export default function BookingConfirmationScreen({
           <Row
             icon={
               <Calendar
-                size={17}
-                color={colors.textMuted}
+                size={18}
+                color={colors.primary}
               />
             }
             label="Date"
@@ -174,8 +172,8 @@ export default function BookingConfirmationScreen({
           <Row
             icon={
               <Clock
-                size={17}
-                color={colors.textMuted}
+                size={18}
+                color={colors.primary}
               />
             }
             label="Time"
@@ -185,8 +183,8 @@ export default function BookingConfirmationScreen({
           <Row
             icon={
               <Clock
-                size={17}
-                color={colors.textMuted}
+                size={18}
+                color={colors.primary}
               />
             }
             label="Duration"
@@ -196,40 +194,45 @@ export default function BookingConfirmationScreen({
           <Row
             icon={
               <MapPin
-                size={17}
-                color={colors.textMuted}
+                size={18}
+                color={colors.primary}
               />
             }
             label="Location"
             value={location}
           />
 
-          <View style={styles.lastRow}>
-            <Row
-              icon={
-                <DollarSign
-                  size={17}
-                  color={colors.textMuted}
-                />
-              }
-              label="Price"
-              value={`Rs ${service.price}`}
-            />
-          </View>
+          <Row
+            icon={
+              <DollarSign
+                size={18}
+                color={colors.primary}
+              />
+            }
+            label="Price"
+            value={`Rs ${service.price}`}
+            last
+          />
         </View>
 
+        {/* Cancellation Policy */}
         <View style={styles.policyCard}>
-          <Text style={styles.policyTitle}>
-            Cancellation policy
-          </Text>
+          <View style={styles.policyHeader}>
+            <View style={styles.policyDot} />
+
+            <Text style={styles.policyTitle}>
+              Cancellation policy
+            </Text>
+          </View>
 
           <Text style={styles.policy}>
-            You can cancel free of charge up to
-            24 hours before your appointment.
+            You can cancel free of charge up to 24
+            hours before your appointment.
           </Text>
         </View>
       </ScrollView>
 
+      {/* Bottom Action */}
       <View style={styles.footer}>
         <Button
           title="Confirm Appointment"
@@ -249,34 +252,49 @@ const styles = StyleSheet.create({
   },
 
   content: {
-    padding: spacing.lg,
-    paddingTop: 60,
-    paddingBottom: 120,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: 130,
+  },
+
+  header: {
+    marginBottom: spacing.lg,
   },
 
   title: {
     ...typography.h2,
+    fontWeight: '700',
     marginBottom: spacing.xs,
   },
 
   subtitle: {
     ...typography.bodySecondary,
-    marginBottom: spacing.lg,
+    lineHeight: 21,
+    maxWidth: '95%',
   },
 
   card: {
     backgroundColor: colors.card,
     borderRadius: radius.lg,
-    padding: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
     ...shadows.sm,
   },
 
+  sectionTitle: {
+    ...typography.label,
+    fontWeight: '700',
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+
   row: {
+    minHeight: 58,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingVertical: spacing.sm,
-    borderBottomWidth: 1,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
 
@@ -287,19 +305,33 @@ const styles = StyleSheet.create({
   rowLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
     flex: 1,
+    marginRight: spacing.md,
+  },
+
+  iconContainer: {
+    width: 34,
+    height: 34,
+    borderRadius: radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.background,
+    marginRight: spacing.sm,
   },
 
   rowLabel: {
     ...typography.bodySecondary,
+    fontSize: 14,
+    flexShrink: 1,
   },
 
   rowValue: {
     ...typography.body,
     fontWeight: '600',
-    maxWidth: '55%',
+    fontSize: 14,
+    maxWidth: '52%',
     textAlign: 'right',
+    flexShrink: 1,
   },
 
   policyCard: {
@@ -307,22 +339,42 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     borderRadius: radius.md,
     backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+
+  policyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+
+  policyDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: colors.primary,
+    marginRight: spacing.xs,
   },
 
   policyTitle: {
     ...typography.label,
-    marginBottom: spacing.xs,
+    fontWeight: '700',
   },
 
   policy: {
     ...typography.caption,
-    lineHeight: 18,
+    lineHeight: 19,
+    marginLeft: 15,
   },
 
   footer: {
-    padding: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
     backgroundColor: colors.card,
-    borderTopWidth: 1,
+    borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,
+    ...shadows.sm,
   },
 });

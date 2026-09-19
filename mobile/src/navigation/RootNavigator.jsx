@@ -1,22 +1,56 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
+import {
+  NavigationContainer,
+} from '@react-navigation/native';
+
+import {
+  createNativeStackNavigator,
+} from '@react-navigation/native-stack';
 
 import { useAuthStore } from '../store/authStore';
 import { USER_ROLES } from '../constants';
 
 import AuthNavigator from './AuthNavigator';
 import CustomerTabNavigator from './CustomerTabNavigator';
-import ProviderTabNavigator from './ProviderTabNavigator';
+import ProviderNavigator from './ProviderStackNavigator';
+
+import NotificationsScreen from '../screens/customer/NotificationsScreen';
 
 import LoadingState from '../components/ui/LoadingState';
 
 const Stack = createNativeStackNavigator();
+const CustomerStack = createNativeStackNavigator();
+
+function CustomerNavigator() {
+  return (
+    <CustomerStack.Navigator
+      id="CustomerNavigator"
+      initialRouteName="CustomerTabs"
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <CustomerStack.Screen
+        name="CustomerTabs"
+        component={CustomerTabNavigator}
+      />
+
+      <CustomerStack.Screen
+        name="Notifications"
+        component={NotificationsScreen}
+      />
+    </CustomerStack.Navigator>
+  );
+}
 
 export default function RootNavigator() {
-  const { isLoading, isAuthenticated, user } = useAuthStore();
+  const {
+    isLoading,
+    isAuthenticated,
+    user,
+  } = useAuthStore();
 
-  // Restore/check authentication before rendering navigation.
   if (isLoading) {
     return <LoadingState />;
   }
@@ -36,12 +70,12 @@ export default function RootNavigator() {
         ) : user?.role === USER_ROLES.PROVIDER ? (
           <Stack.Screen
             name="ProviderApp"
-            component={ProviderTabNavigator}
+            component={ProviderNavigator}
           />
         ) : (
           <Stack.Screen
             name="CustomerApp"
-            component={CustomerTabNavigator}
+            component={CustomerNavigator}
           />
         )}
       </Stack.Navigator>

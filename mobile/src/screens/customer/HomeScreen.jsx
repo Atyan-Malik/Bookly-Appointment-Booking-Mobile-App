@@ -1,5 +1,5 @@
-
 import React, { useEffect, useState, useCallback } from 'react';
+
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import {
   Bell,
   Search as SearchIcon,
   ChevronRight,
+  Sparkles,
 } from 'lucide-react-native';
 
 import {
@@ -27,6 +28,7 @@ import {
 
 import { useAuthStore } from '../../store/authStore';
 import { useFavoritesStore } from '../../store/favoriteStore';
+import { useNotificationStore } from '../../store/notificationStore';
 
 import professionalService from '../../services/professionalService';
 import categoryService from '../../services/categoryService';
@@ -46,6 +48,12 @@ export default function HomeScreen({ navigation }) {
     toggleFavorite,
   } = useFavoritesStore();
 
+  const {
+  notifications,
+  fetchNotifications,
+} = useNotificationStore();
+
+
   const [professionals, setProfessionals] = useState([]);
   const [categories, setCategories] = useState([]);
 
@@ -55,6 +63,14 @@ export default function HomeScreen({ navigation }) {
 
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+
+  // ==========================================
+  // NOTIFICATION BADGE
+  // ==========================================
+const unreadCount = (notifications || []).filter(
+  (notification) => !notification.isRead
+).length;
+ 
 
   // ==========================================
   // LOAD PROFESSIONALS
@@ -117,10 +133,12 @@ export default function HomeScreen({ navigation }) {
     loadProfessionals();
     loadCategories();
     fetchFavorites();
+    fetchNotifications();
   }, [
     loadProfessionals,
     loadCategories,
     fetchFavorites,
+    fetchNotifications,
   ]);
 
   // ==========================================
@@ -135,6 +153,7 @@ export default function HomeScreen({ navigation }) {
         loadProfessionals(),
         loadCategories(),
         fetchFavorites(),
+        fetchNotifications(),
       ]);
     } finally {
       setRefreshing(false);
@@ -153,6 +172,27 @@ export default function HomeScreen({ navigation }) {
       },
     });
   };
+
+  // ==========================================
+  // PROFESSIONAL PRESS
+  // ==========================================
+
+  const handleProfessionalPress = (professionalId) => {
+    navigation.navigate('Discover', {
+      screen: 'ProfessionalDetail',
+      params: {
+        id: professionalId,
+      },
+    });
+  };
+
+  // ==========================================
+  // NOTIFICATIONS
+  // ==========================================
+
+ const handleNotificationsPress = () => {
+  navigation.getParent()?.navigate('Notifications');
+};
 
   // ==========================================
   // USER
@@ -176,6 +216,7 @@ export default function HomeScreen({ navigation }) {
   return (
     <ScrollView
       style={styles.container}
+      contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl
@@ -190,24 +231,37 @@ export default function HomeScreen({ navigation }) {
       ======================================== */}
 
       <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>
+        <View style={styles.headerText}>
+          <Text style={styles.welcomeText}>
+            Welcome back
+          </Text>
+
+          <Text
+            style={styles.greeting}
+            numberOfLines={1}
+          >
             Good morning, {firstName}!
           </Text>
         </View>
 
-        <TouchableOpacity
-          activeOpacity={0.7}
-          onPress={() =>
-            navigation.navigate('Notifications')
-          }
-          style={styles.notificationButton}
-        >
-          <Bell
-            size={22}
-            color={colors.textPrimary}
-          />
-        </TouchableOpacity>
+       <TouchableOpacity
+  activeOpacity={0.75}
+  onPress={handleNotificationsPress}
+  style={styles.notificationButton}
+>
+  <Bell
+    size={21}
+    color={colors.textPrimary}
+  />
+
+  {unreadCount > 0 && (
+    <View style={styles.notificationBadge}>
+      <Text style={styles.notificationBadgeText}>
+        {unreadCount > 99 ? '99+' : unreadCount}
+      </Text>
+    </View>
+  )}
+</TouchableOpacity>
       </View>
 
       {/* ========================================
@@ -215,20 +269,30 @@ export default function HomeScreen({ navigation }) {
       ======================================== */}
 
       <TouchableOpacity
-        activeOpacity={0.8}
+        activeOpacity={0.85}
         style={styles.searchBar}
         onPress={() =>
           navigation.navigate('Discover')
         }
       >
-        <SearchIcon
+        <View style={styles.searchIconContainer}>
+          <SearchIcon
+            size={18}
+            color={colors.primary}
+          />
+        </View>
+
+        <Text
+          style={styles.searchPlaceholder}
+          numberOfLines={1}
+        >
+          Search professionals or services
+        </Text>
+
+        <ChevronRight
           size={18}
           color={colors.textMuted}
         />
-
-        <Text style={styles.searchPlaceholder}>
-          Search professionals, services...
-        </Text>
       </TouchableOpacity>
 
       {/* ========================================
@@ -237,14 +301,28 @@ export default function HomeScreen({ navigation }) {
 
       <LinearGradient
         colors={colors.gradients.hero}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
         style={styles.hero}
       >
+        <View style={styles.heroBadge}>
+          <Sparkles
+            size={13}
+            color={colors.white}
+          />
+
+          <Text style={styles.heroBadgeText}>
+            Easy & trusted booking
+          </Text>
+        </View>
+
         <Text style={styles.heroTitle}>
           Book your next appointment
         </Text>
 
         <Text style={styles.heroSubtitle}>
-          Find trusted professionals near you.
+          Find trusted professionals near you and
+          book your appointment in minutes.
         </Text>
 
         <TouchableOpacity
@@ -257,6 +335,11 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.heroButtonText}>
             Find a Professional
           </Text>
+
+          <ChevronRight
+            size={17}
+            color={colors.primary}
+          />
         </TouchableOpacity>
       </LinearGradient>
 
@@ -265,16 +348,14 @@ export default function HomeScreen({ navigation }) {
       ======================================== */}
 
       <View style={styles.categorySection}>
-        {/* Category Header */}
-
-        <View style={styles.categoryHeader}>
-          <View style={styles.categoryHeaderText}>
-            <Text style={styles.categoryTitle}>
-              Categories
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionHeaderText}>
+            <Text style={styles.sectionTitle}>
+              Explore categories
             </Text>
 
-            <Text style={styles.categorySubtitle}>
-              Explore services by category
+            <Text style={styles.sectionSubtitle}>
+              Find the right service for you
             </Text>
           </View>
 
@@ -295,8 +376,6 @@ export default function HomeScreen({ navigation }) {
             />
           </TouchableOpacity>
         </View>
-
-        {/* Category Cards */}
 
         {categoriesLoading ? (
           <View style={styles.categoryLoading}>
@@ -339,28 +418,52 @@ export default function HomeScreen({ navigation }) {
       ======================================== */}
 
       <View style={styles.recommendedSection}>
-        <View style={styles.sectionRow}>
-          <View>
-            <Text style={styles.sectionTitle}>
-              Recommended for you
-            </Text>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionHeaderText}>
+            <View style={styles.recommendedTitleRow}>
+              <View style={styles.sparkleContainer}>
+                <Sparkles
+                  size={14}
+                  color={colors.primary}
+                />
+              </View>
+
+              <Text style={styles.sectionTitle}>
+                Recommended for you
+              </Text>
+            </View>
 
             <Text style={styles.sectionSubtitle}>
               Professionals you may like
             </Text>
           </View>
+
+          <TouchableOpacity
+            activeOpacity={0.7}
+            style={styles.seeAllButton}
+            onPress={() =>
+              navigation.navigate('Discover')
+            }
+          >
+            <Text style={styles.seeAllText}>
+              See all
+            </Text>
+
+            <ChevronRight
+              size={16}
+              color={colors.primary}
+            />
+          </TouchableOpacity>
         </View>
 
-        {/* Error */}
-
         {error ? (
-          <ErrorState
-            message={error}
-            onRetry={loadProfessionals}
-          />
+          <View style={styles.errorWrapper}>
+            <ErrorState
+              message={error}
+              onRetry={loadProfessionals}
+            />
+          </View>
         ) : professionals.length === 0 ? (
-          /* Empty */
-
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyTitle}>
               No professionals available
@@ -372,8 +475,6 @@ export default function HomeScreen({ navigation }) {
             </Text>
           </View>
         ) : (
-          /* Professionals */
-
           <FlatList
             data={professionals}
             horizontal
@@ -382,38 +483,36 @@ export default function HomeScreen({ navigation }) {
             contentContainerStyle={
               styles.professionalList
             }
+            ItemSeparatorComponent={() => (
+              <View style={styles.professionalGap} />
+            )}
             renderItem={({ item }) => (
-              <ProfessionalCard
-                professional={item}
-                isFavorite={isFavorite(item._id)}
-                onToggleFavorite={() =>
-                  toggleFavorite(item._id)
-                }
-                onPress={() =>
-                  navigation.navigate(
-                    'Discover',
-                    {
-                      screen:
-                        'ProfessionalDetail',
-                      params: {
-                        id: item._id,
-                      },
-                    }
-                  )
-                }
-              />
+              <View
+                style={styles.professionalCardWrapper}
+              >
+                <ProfessionalCard
+                  professional={item}
+                  isFavorite={isFavorite(item._id)}
+                  onToggleFavorite={() =>
+                    toggleFavorite(item._id)
+                  }
+                  onPress={() =>
+                    handleProfessionalPress(
+                      item._id
+                    )
+                  }
+                />
+              </View>
             )}
           />
         )}
       </View>
 
-      {/* Bottom spacing */}
+      {/* ========================================
+          BOTTOM SPACING
+      ======================================== */}
 
-      <View
-        style={{
-          height: spacing.xxl,
-        }}
-      />
+      <View style={styles.bottomSpacing} />
     </ScrollView>
   );
 }
@@ -428,32 +527,71 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
 
+  contentContainer: {
+    paddingBottom: spacing.xxl,
+  },
+
   // ==========================================
   // HEADER
   // ==========================================
 
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
-    paddingTop: 60,
+    paddingTop: 58,
     paddingBottom: spacing.md,
+  },
+
+  headerText: {
+    flex: 1,
+    paddingRight: spacing.md,
+  },
+
+  welcomeText: {
+    ...typography.caption,
+    color: colors.textMuted,
+    marginBottom: 2,
   },
 
   greeting: {
     ...typography.h3,
+    color: colors.textPrimary,
   },
 
   notificationButton: {
-    width: 42,
-    height: 42,
+    width: 44,
+    height: 44,
     borderRadius: radius.md,
     backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
+  },
+
+  notificationBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    minWidth: 19,
+    height: 19,
+    paddingHorizontal: 4,
+    borderRadius: 10,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: colors.background,
+  },
+
+  notificationBadgeText: {
+    color: colors.white,
+    fontSize: 9,
+    fontWeight: '700',
+    lineHeight: 11,
   },
 
   // ==========================================
@@ -463,20 +601,31 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
+    height: 52,
     marginHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+    paddingHorizontal: spacing.sm,
+    paddingRight: spacing.md,
     backgroundColor: colors.card,
     borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
-    height: 48,
-    paddingHorizontal: spacing.md,
-    marginBottom: spacing.lg,
+  },
+
+  searchIconContainer: {
+    width: 34,
+    height: 34,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: `${colors.primary}12`,
+    marginRight: spacing.sm,
   },
 
   searchPlaceholder: {
     ...typography.body,
     color: colors.textMuted,
+    flex: 1,
   },
 
   // ==========================================
@@ -485,30 +634,57 @@ const styles = StyleSheet.create({
 
   hero: {
     marginHorizontal: spacing.lg,
+    marginBottom: spacing.xl,
     borderRadius: radius.xl,
     padding: spacing.xl,
-    marginBottom: spacing.xl,
+    minHeight: 200,
+    overflow: 'hidden',
+  },
+
+  heroBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 5,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 5,
+    marginBottom: spacing.sm,
+    borderRadius: radius.full,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+  },
+
+  heroBadgeText: {
+    ...typography.caption,
+    color: colors.white,
+    fontSize: 11,
   },
 
   heroTitle: {
     ...typography.h2,
     color: colors.white,
+    lineHeight: 30,
+    maxWidth: '90%',
   },
 
   heroSubtitle: {
     ...typography.body,
     color: colors.white,
     opacity: 0.9,
-    marginTop: spacing.xxs,
+    marginTop: spacing.xs,
     marginBottom: spacing.lg,
+    lineHeight: 20,
+    maxWidth: '95%',
   },
 
   heroButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
     backgroundColor: colors.white,
     borderRadius: radius.md,
     paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    alignItems: 'center',
+    paddingHorizontal: spacing.md,
     alignSelf: 'flex-start',
   },
 
@@ -518,14 +694,10 @@ const styles = StyleSheet.create({
   },
 
   // ==========================================
-  // CATEGORY SECTION
+  // SECTION HEADER
   // ==========================================
 
-  categorySection: {
-    marginBottom: spacing.xl,
-  },
-
-  categoryHeader: {
+  sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -533,16 +705,17 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
 
-  categoryHeaderText: {
+  sectionHeaderText: {
     flex: 1,
+    paddingRight: spacing.sm,
   },
 
-  categoryTitle: {
+  sectionTitle: {
     ...typography.h4,
     color: colors.textPrimary,
   },
 
-  categorySubtitle: {
+  sectionSubtitle: {
     ...typography.caption,
     color: colors.textMuted,
     marginTop: 3,
@@ -566,8 +739,12 @@ const styles = StyleSheet.create({
   },
 
   // ==========================================
-  // CATEGORY LIST
+  // CATEGORIES
   // ==========================================
+
+  categorySection: {
+    marginBottom: spacing.xl,
+  },
 
   categoryList: {
     paddingHorizontal: spacing.lg,
@@ -575,31 +752,23 @@ const styles = StyleSheet.create({
   },
 
   categoryGap: {
-    width: spacing.sm,
+    width: 8,
   },
-
-  // ==========================================
-  // CATEGORY LOADING
-  // ==========================================
 
   categoryLoading: {
     flexDirection: 'row',
     paddingHorizontal: spacing.lg,
-    gap: spacing.sm,
+    gap: 8,
   },
 
   categorySkeleton: {
-    width: 90,
-    height: 110,
+    width: 86,
+    height: 104,
     borderRadius: radius.lg,
     backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border,
   },
-
-  // ==========================================
-  // CATEGORY EMPTY
-  // ==========================================
 
   categoryEmpty: {
     marginHorizontal: spacing.lg,
@@ -624,32 +793,56 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
 
-  sectionRow: {
-    paddingHorizontal: spacing.lg,
-    marginBottom: spacing.md,
+  recommendedTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 
-  sectionTitle: {
-    ...typography.h4,
-    color: colors.textPrimary,
+  sparkleContainer: {
+    width: 27,
+    height: 27,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: `${colors.primary}12`,
+    marginRight: spacing.xs,
   },
 
-  sectionSubtitle: {
-    ...typography.caption,
-    color: colors.textMuted,
-    marginTop: 3,
-  },
+  /*
+   * Important:
+   * Each card now has its own fixed width.
+   * This prevents ProfessionalCard's width: '100%'
+   * from expanding across the horizontal list.
+   */
 
   professionalList: {
-    paddingHorizontal: spacing.lg,
+    paddingLeft: spacing.lg,
+    paddingRight: spacing.lg,
+  },
+
+  professionalCardWrapper: {
+    width: 210,
+  },
+
+  professionalGap: {
+    width: 10,
   },
 
   // ==========================================
-  // EMPTY PROFESSIONALS
+  // ERROR
+  // ==========================================
+
+  errorWrapper: {
+    marginHorizontal: spacing.lg,
+  },
+
+  // ==========================================
+  // EMPTY
   // ==========================================
 
   emptyContainer: {
     marginHorizontal: spacing.lg,
+    paddingHorizontal: spacing.lg,
     paddingVertical: spacing.xl,
     alignItems: 'center',
     backgroundColor: colors.card,
@@ -669,5 +862,14 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     textAlign: 'center',
     marginTop: spacing.xs,
+    lineHeight: 20,
+  },
+
+  // ==========================================
+  // BOTTOM
+  // ==========================================
+
+  bottomSpacing: {
+    height: spacing.xxl,
   },
 });

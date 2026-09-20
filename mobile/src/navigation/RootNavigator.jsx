@@ -1,22 +1,16 @@
 import React from 'react';
-
-import {
-  NavigationContainer,
-} from '@react-navigation/native';
-
-import {
-  createNativeStackNavigator,
-} from '@react-navigation/native-stack';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { useAuthStore } from '../store/authStore';
 import { USER_ROLES } from '../constants';
 
+import SplashScreen from '../screens/customer/SplashScreen';
 import AuthNavigator from './AuthNavigator';
 import CustomerTabNavigator from './CustomerTabNavigator';
 import ProviderNavigator from './ProviderStackNavigator';
 
 import NotificationsScreen from '../screens/customer/NotificationsScreen';
-
 import LoadingState from '../components/ui/LoadingState';
 
 const Stack = createNativeStackNavigator();
@@ -25,7 +19,6 @@ const CustomerStack = createNativeStackNavigator();
 function CustomerNavigator() {
   return (
     <CustomerStack.Navigator
-      id="CustomerNavigator"
       initialRouteName="CustomerTabs"
       screenOptions={{
         headerShown: false,
@@ -63,10 +56,17 @@ export default function RootNavigator() {
         }}
       >
         {!isAuthenticated ? (
-          <Stack.Screen
-            name="Auth"
-            component={AuthNavigator}
-          />
+          <>
+            <Stack.Screen
+              name="Splash"
+              component={SplashScreen}
+            />
+
+            <Stack.Screen
+              name="Auth"
+              component={AuthNavigator}
+            />
+          </>
         ) : user?.role === USER_ROLES.PROVIDER ? (
           <Stack.Screen
             name="ProviderApp"
